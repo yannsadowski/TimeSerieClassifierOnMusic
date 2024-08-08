@@ -2,13 +2,17 @@
 data/*
 data_test/*
 
-# Ignore wandb/default.yaml for personnel data
-conf/wandb/default.yaml
-
-# Ignore the dev_env, outputs, and wandb directories
+# Ignore the dev_env and outputs directories
 dev_env/
 outputs/
-wandb/
+
+# Ignore the wandb directory at the root
+/wandb/
+
+# But do not ignore the conf/wandb directory and its contents except for conf/wandb/default.yaml
+!conf/wandb/
+!conf/wandb/*
+conf/wandb/default.yaml
 
 # Ignore specific configuration files
 *.env
