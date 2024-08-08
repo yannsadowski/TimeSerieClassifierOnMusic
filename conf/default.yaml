@@ -1,0 +1,12 @@
+defaults:
+  - _self_
+  - data: default
+  - models: default
+  - trainer: default
+  - predict: default
+  - wandb : default
+
+hydra:
+  job:
+    chdir: true
+    

@@ -1,0 +1,3 @@
+epochs: 150
+learning_rate: 0.0009642643558379736
+save : True

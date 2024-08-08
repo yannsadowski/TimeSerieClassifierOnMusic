@@ -1,0 +1,3 @@
+audio_file : D:\code\TimeSerieClassifier\data
+class_mapping : D:\code\TimeSerieClassifier\model\class_mapping.yaml
+single_audio_file: D:\code\TimeSerieClassifier\data_test\Dream On - Aerosmith.wav

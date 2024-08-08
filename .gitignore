@@ -1,0 +1,39 @@
+# Ignore the contents of the data and data_test directories
+data/*
+data_test/*
+
+# Ignore wandb/default.yaml for personnel data
+conf/wandb/default.yaml
+
+# Ignore the dev_env, outputs, and wandb directories
+dev_env/
+outputs/
+wandb/
+
+# Ignore specific configuration files
+*.env
+*.ini
+
+# Ignore log files
+*.log
+
+# Ignore compiler and build files
+*.pyc
+__pycache__/
+*.so
+*.o
+*.a
+*.d
+
+# Ignore temporary editor files
+*.swp
+*~
+.DS_Store
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+*.iml

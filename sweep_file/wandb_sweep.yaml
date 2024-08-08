@@ -1,0 +1,36 @@
+program: main.py
+metric:
+  name: test_loss
+  goal: minimize
+name: random_sweep_3
+method: random
+parameters:
+  models.dropout:
+    min: 0.1
+    max: 0.3  # Limiter le dropout max à 0.3
+  models.norm_type:
+    values: [rmsnorm, layernorm]
+  models.hidden_size_multiplier:
+    min: 4  # Limiter le hidden size multiplier entre 4
+    max: 8  # et 8
+  models.num_layers_lstm:
+    min: 2
+    max: 3
+  models.num_layers_dense:
+    min: 1
+    max: 5
+  data.params.sequence_size:
+    min: 5  # Limiter le sequence size entre 4
+    max: 9  # et 9
+  data.params.transform:
+    values: [sklearn.preprocessing.StandardScaler, sklearn.preprocessing.MinMaxScaler]
+  trainer.learning_rate:
+    distribution: log_uniform_values  # Distribution logarithmique
+    min: !!float 1e-5
+    max: !!float 0.01  # Limiter le learning rate max à 0.01
+
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- ${args_no_hyphens}

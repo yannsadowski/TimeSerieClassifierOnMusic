@@ -1,0 +1,32 @@
+program: main.py
+metric:
+  name: test_loss
+  goal: minimize
+name: random_sweep_batch
+method: random
+parameters:
+  models.dropout: 
+    value : 0.2614356551638768
+  models.norm_type:
+    value: layernorm
+  models.hidden_size_multiplier: 
+    value : 9
+  models.num_layers_lstm: 
+    value : 5
+  models.num_layers_dense: 
+    value : 5
+  data.params.sequence_size: 
+    value : 9
+  data.params.transform:
+    value: sklearn.preprocessing.StandardScaler
+  data.params.batch_size:
+    min: 5000
+    max: 20000
+  trainer.learning_rate: 
+    value : 3.2854163107297357e-05 # Limiter le learning rate max à 0.01
+
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- ${args_no_hyphens}

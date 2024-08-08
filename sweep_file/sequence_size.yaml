@@ -1,0 +1,15 @@
+program: main.py
+metric:
+  name: test_loss
+  goal: minimize
+name: random_sweep_sequence
+method: random
+parameters:
+  data.params.sequence_size: 
+    values: [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
+
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- ${args_no_hyphens}

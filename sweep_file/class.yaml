@@ -1,0 +1,17 @@
+program: main.py
+metric:
+  name: test_loss
+  goal: minimize
+name: random_sweep_class
+method: random
+parameters:
+  data.params.num_classes:
+    min: 2
+    max: 10
+
+
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- ${args_no_hyphens}
