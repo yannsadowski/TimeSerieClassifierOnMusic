@@ -15,28 +15,41 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # Function to extract audio characteristics
 def extract_audio_features(file_path):
     try:
+        # Load the audio file
         y, sr = librosa.load(file_path, sr=None)
-        y_harm, y_perc = librosa.effects.hpss(y)
+        
+        # Decompose the audio into harmonic and percussive components
+        y_harm, y_perc = librosa.effects.hpss(y, n_fft=2048, hop_length=512)
 
-        spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
-        spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)[0]
-        zcr = librosa.feature.zero_crossing_rate(y)[0]
-        rms = librosa.feature.rms(y=y)[0]
-        spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)[0]
-        times = librosa.times_like(spectral_centroid)
+        # Extract various audio features
+        spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr, n_fft=2048, hop_length=512)[0]
+        spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr, n_fft=2048, hop_length=512)[0]
+        zcr = librosa.feature.zero_crossing_rate(y, hop_length=512)[0]
+        rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=512)[0]
+        spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr, n_fft=2048, hop_length=512)[0]
+        
+        # Get the times for each frame
+        times = librosa.times_like(spectral_centroid, sr=sr, hop_length=512)
+        target_frames = len(times)  # Use the length of times as the target frame count
 
+        # Apply the windowed_statistic function to y_harm and y_perc
+        y_harm = windowed_statistic(y_harm, n_fft=2048, hop_length=512, target_frames=target_frames)
+        y_perc = windowed_statistic(y_perc, n_fft=2048, hop_length=512, target_frames=target_frames)
+
+        # Create a DataFrame to store the features
         df = pd.DataFrame({
             'spectral_centroid': spectral_centroid,
             'spectral_bandwidth': spectral_bandwidth,
             'zcr': zcr,
             'rms': rms,
-            'harmonic': y_harm[:len(times)],
-            'percussive': y_perc[:len(times)],
+            'harmonic': y_harm,
+            'percussive': y_perc,
             'spectral_rolloff': spectral_rolloff
         })
 
         return df
     except Exception as e:
+        # Print an error message and return an empty DataFrame if something goes wrong
         print(f"Error processing {file_path}: {e}")
         return pd.DataFrame()  # Return an empty DataFrame in case of an error
 
@@ -200,26 +213,73 @@ def prepare_dataloaders(config):
     
     return train_loader, val_loader, test_loader, len(genres), train_data.shape[2], genres
 
+import numpy as np
+import librosa
+
+def windowed_statistic(y, n_fft, hop_length, target_frames):
+    # Calculate the number of expected frames
+    num_frames = (len(y) - n_fft) // hop_length + 1
+
+    # Add padding to the signal to avoid losing elements
+    total_length = num_frames * hop_length + n_fft
+    y_padded = np.pad(y, (0, max(0, total_length - len(y))), mode='constant')
+
+    # Split the signal into frames
+    frames = librosa.util.frame(y_padded, frame_length=n_fft, hop_length=hop_length)
+    
+    # Calculate the mean of each frame
+    statistics = np.mean(frames, axis=0)
+    
+    # Adjust the length to match the target number of frames
+    if len(statistics) > target_frames:
+        statistics = statistics[:target_frames]
+    elif len(statistics) < target_frames:
+        statistics = np.pad(statistics, (0, target_frames - len(statistics)), mode='constant')
+    
+    return statistics
+
 def extract_sequences(file_path, sequence_size, transformer_class):
     try:
-        # Load the soundtrack
+        n_fft = 2048
+        hop_length = 512
+
+        # Load the audio file
         y, sr = librosa.load(file_path, sr=None)
         y_harm, y_perc = librosa.effects.hpss(y)
 
-        # Extract the audio characteristics
-        spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
-        spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)[0]
-        zcr = librosa.feature.zero_crossing_rate(y)[0]
-        rms = librosa.feature.rms(y=y)[0]
-        spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)[0]
+        # Extract reference audio features
+        spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length)[0]
+        target_frames = len(spectral_centroid)  # Use this length as reference
+
+        #print(f"spect_centroid : {len(spectral_centroid)}")
+
+        # Apply the windowed_statistic function to y_harm and y_perc
+        y_harm = windowed_statistic(y_harm, n_fft, hop_length, target_frames)
+        y_perc = windowed_statistic(y_perc, n_fft, hop_length, target_frames)
+
+        #print(f"y_harm : {len(y_harm)}")
+        #print(f"y_perc : {len(y_perc)}")
+
+        spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length)[0]
+        #print(f"spectral_bandwidth : {len(spectral_bandwidth)}")
+        
+        zcr = librosa.feature.zero_crossing_rate(y, hop_length=hop_length)[0]
+        #print(f"zcr : {len(zcr)}")
+        
+        rms = librosa.feature.rms(y=y, frame_length=n_fft, hop_length=hop_length)[0]
+        #print(f"rms : {len(rms)}")
+        
+        spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length)[0]
+        # print(f"spectral_rolloff : {len(spectral_rolloff)}")
+        
 
         features = pd.DataFrame({
             'spectral_centroid': spectral_centroid,
             'spectral_bandwidth': spectral_bandwidth,
             'zcr': zcr,
             'rms': rms,
-            'harmonic': y_harm[:len(spectral_centroid)],
-            'percussive': y_perc[:len(spectral_centroid)],
+            'harmonic': y_harm,
+            'percussive': y_perc,
             'spectral_rolloff': spectral_rolloff
         })
         
