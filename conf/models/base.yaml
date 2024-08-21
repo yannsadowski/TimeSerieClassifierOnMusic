@@ -1,0 +1,6 @@
+hidden_size_multiplier : 1    # Example hidden size for LSTM
+num_layers_lstm : 1 # Number of LSTM layers
+num_layers_dense : 1 # Number of Dense layers
+dropout : 0.1437946524814418
+norm_type : rmsnorm
+model_path : D:\code\TimeSerieClassifier\model\best_model.pth
