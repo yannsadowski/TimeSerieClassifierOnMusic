@@ -6,6 +6,8 @@ from tqdm import tqdm
 import wandb
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import time
+import io
+import torchinfo 
 
 def train_one_epoch(model, train_loader, criterion, optimizer, device):
     model.train()
@@ -60,7 +62,7 @@ def validate(model, val_loader, criterion, device):
 
     return epoch_loss, epoch_accuracy, epoch_precision, epoch_recall, epoch_f1
 
-def train(model, train_loader, val_loader, test_loader, config):
+def train(model, train_loader, val_loader, test_loader, config,dataset_config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
@@ -118,6 +120,23 @@ def train(model, train_loader, val_loader, test_loader, config):
     print(f"Test Precision: {test_precision:.4f}")
     print(f"Test Recall: {test_recall:.4f}")
     print(f"Test F1 Score: {test_f1:.4f}")
+    
+    
+    summary_info = torchinfo.summary(model,input_size=(dataset_config.params.batch_size,dataset_config.params.sequence_size,7), device=device,verbose=0)
+
+
+    model_summary_str = str(summary_info)
+
+    wandb.summary["total_params"] = summary_info.total_params
+    wandb.summary["trainable_params"] = summary_info.trainable_params
+    wandb.summary["total_mult_adds"] = summary_info.total_mult_adds
+    wandb.summary["input_size"] = summary_info.input_size
+
+    with open("model_summary.txt", "w", encoding='utf-8') as f:
+        f.write(model_summary_str)
+    artifact = wandb.Artifact('model-summary', type='model')
+    artifact.add_file('model_summary.txt')
+    wandb.log_artifact(artifact)
 
     wandb.log({
         "test_loss": test_loss,
@@ -126,3 +145,4 @@ def train(model, train_loader, val_loader, test_loader, config):
         "test_recall": test_recall,
         "test_f1": test_f1
     })
+    

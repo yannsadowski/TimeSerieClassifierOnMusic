@@ -2,6 +2,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import wandb
 import torch
+from torchinfo import summary
 
 from src.data.data import prepare_dataloaders
 from src.models.LSTMModel import LSTMModel
@@ -38,8 +39,8 @@ def main(dict_config: DictConfig):
         norm_type=model_config.norm_type
     ).to(device)
     
-    # Print the model for verification
-    print(model)
+    
+
     
     # Connect to Weights and Biases
     wandb.login(key=wandb_config.api_key)
@@ -51,8 +52,14 @@ def main(dict_config: DictConfig):
     wandb.init(project=wandb_config.project_name, entity=wandb_config.get('entity', None), config=wandb_config_dict, settings=wandb.Settings(start_method="thread"))
     wandb.config.update({"chosen_genres": genres})
     
+    # Print the model for verification
+    print(model)
+    
     # Start the training process
-    train(model, train_loader, val_loader, test_loader, trainer_config)
-
+    train(model, train_loader, val_loader, test_loader, trainer_config,dataset_config)
+    
+    # finish wandb run
+    wandb.finish()
+    
 if __name__ == "__main__":
     main()
